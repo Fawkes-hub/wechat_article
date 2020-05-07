@@ -120,7 +120,6 @@ class wechatArticle
             }
             //解析文章图片
             $info = preg_replace_callback('/data-src="(.*?)"/', function ($matches) {
-                var_dump($matches[1]);
                 return 'src=' . self::getImg($matches[1], 1);
             }, $info);
             return $info;
