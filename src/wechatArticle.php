@@ -7,7 +7,6 @@
  */
 
 namespace fawkes\wechat_article;
-
 use Jaeger\GHttp;
 use QL\QueryList;
 
@@ -38,6 +37,8 @@ class wechatArticle
     private $thumb; //文章主图
     private $wx_nickname; //文章公众号
 
+    private $http_to_img = '';
+
     /**
      * 获取文章的内容
      * @param string $name 需要获取的字段名
@@ -50,6 +51,14 @@ class wechatArticle
             throw new wechatArticleException("文章提取异常：内容为空");
         }
         return $this->articleInfo[$name] ?? '';
+    }
+
+    /**
+     * 设置防盗链地址 传入本地设置的API地址
+     */
+    public function setHttpToImg($http)
+    {
+        $this->http_to_img = $http;
     }
 
     /**
@@ -109,6 +118,11 @@ class wechatArticle
                 $basicContent = self::articleBasicInfo($html, $info); //全部都传入完整内容
                 $info = array_merge($info, $basicContent);
             }
+            //解析文章图片
+            $info = preg_replace_callback('/data-src="(.*?)"/', function ($matches) {
+                var_dump($matches[1]);
+                return 'src=' . self::getImg($matches[1], 1);
+            }, $info);
             return $info;
         } catch (\Exception $e) {
             throw new wechatArticleException("文章提取异常：{$e->getMessage()}");
@@ -193,6 +207,21 @@ class wechatArticle
         $string = str_replace('&nbsp;', ' ', $string);
         $string = str_replace("\\", '', $string);
         return $string;
+    }
+
+    /**
+     * 用来获取微信防盗链的图片资源
+     * @param string $imgUrl 图片地址
+     * @param int $type 1读取地址 返回资源  2直接返回资源
+     * @return bool|string
+     */
+    public function getImg(string $imgUrl, $type = 2)
+    {
+        if ($type == 1) {
+            return $this->http_to_img . $imgUrl;
+        }
+        @ header("Content-Type:image/png");
+        return file_get_contents($imgUrl);
     }
 
 }

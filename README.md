@@ -14,25 +14,36 @@ composer require fawkes/wechat_article
 use fawkes\wechat_article\wechatArticle;
 use fawkes\wechat_article\wechatArticleException;
 
-$articleInfo = new wechatArticle();
-try {
-    $article = $articleInfo->crawQueryByUrl("https://mp.weixin.qq.com/s/YuhmAYMLgCxktxVo1bgmCQ");
-    print_r($article['content']);
-    unset($article['content']); //调试上会有一些不方便
-    var_dump($article);
-} catch (wechatArticleException $e) {
-    var_dump($e->getMessage());
+class Controller{
+        /**
+         * 获取文章的内容
+         * @param Request $request
+         */
+        public function article(Request $request){
+            $articleInfo = new wechatArticle();
+            try {
+                $articleInfo->setHttpToImg('/图片防盗链设置的接口?imgUrl='); //当前防盗链请求地址
+                $article = $articleInfo->crawQueryByUrl("https://mp.weixin.qq.com/s/YuhmAYMLgCxktxVo1bgmCQ");
+                print_r($article['content']);
+                unset($article['content']);
+                var_dump($article);
+            } catch (wechatArticleException $e) {
+                var_dump($e->getMessage());
+            }
+        }
+    
+        /**
+         * 图片防盗链的处理
+         * @param Request $request
+         * @return \think\Response
+         */
+        public function proxy(Request $request){
+            $articleInfo = new wechatArticle();
+            $imgUrl = $request->param('imgUrl');
+            $headers = [];
+            $headers['Content-Type'] = 'image/png';
+            $content = $articleInfo->getImg($imgUrl);
+            return response($content,200,$headers);
+        }
 }
-/**
-    //可以获得的字段
-      $title; //文章标题
-      $article_author; //文章作者
-      $copyright_stat; //文章原创标识
-      $content; //文章正文   ---数据库字段建议 longtext
-      $article_release_time; //文章发布时间  --时间戳
-      $digest; //文章简介
-      $article_url; //文章原始url
-      $thumb; //文章主图
-      $wx_nickname; //文章公众号
-**/
 ```
