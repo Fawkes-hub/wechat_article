@@ -1,5 +1,6 @@
 # wechat_article
-基于QueryList的微信公众号文章获取工具
+基于QueryList的微信公众号文章获取工具--
+可以获得：文章标题、文章作者、文章原创标识、文章正文、文章发布时间、文章简介、文章原始url、文章主图、文章公众号名称
 
 #### 安装教程
 
@@ -22,4 +23,16 @@ try {
 } catch (wechatArticleException $e) {
     var_dump($e->getMessage());
 }
+/**
+    //可以获得的字段
+      $title; //文章标题
+      $article_author; //文章作者
+      $copyright_stat; //文章原创标识
+      $content; //文章正文   ---数据库字段建议 longtext
+      $article_release_time; //文章发布时间  --时间戳
+      $digest; //文章简介
+      $article_url; //文章原始url
+      $thumb; //文章主图
+      $wx_nickname; //文章公众号
+**/
 ```
