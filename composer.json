@@ -1,0 +1,20 @@
+{
+  "name": "fawkes/wechat_article",
+  "description": "基于QueryList的微信公众号文章获取工具",
+  "authors": [
+    {
+      "name": "Fawkes",
+      "email": "fengke_1213@qq.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "fawkes\\wechat_article\\": "src/"
+    }
+  },
+  "license": "Apache-2.0",
+  "minimum-stability": "stable",
+  "require": {
+    "jaeger/querylist": "4.2.2"
+  }
+}
