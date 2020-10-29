@@ -62,6 +62,17 @@ class wechatArticleVideo
         return $info_arr;
     }
 
+
+    /**
+     * 保存video
+     * @param string $video_url 视频地址
+     */
+    public function saveVideo(string $video_url)
+    {
+        exec("ffmpeg -i '$video_url' -c copy './test.mp4'  2>&1", $out, $status);
+        return $out;
+    }
+
     /**
      * 获取公众号中的资源  音频和视频
      * @param $url
@@ -87,30 +98,6 @@ class wechatArticleVideo
         $vid_arr = $data['video_ids'] ?? [];
         //获取json中的得到音频的mid
         $voice_arr = array_column($data['voice_in_appmsg'], 'voice_id') ?? [];
-        if (empty($vid_arr)) {
-            //data 为文章的详情
-            $html = $data['content_noencode'];
-            preg_match_all('/<iframe (.*?)data-src="(.*?)">/', $html, $matchs);
-            //没有视频脚本退出
-            if (empty($matchs[2])) {
-                throw new wechatArticleException('没有视频匹配到，不采集');
-            }
-            //判断是否是url地址  而后解析得出 vid的值
-            $url = current($matchs[2]);
-            if (!filter_var($url, FILTER_VALIDATE_URL)) {
-                throw new wechatArticleException('视频地址异常：' . $url);
-            }
-            $url = str_replace('&amp;', '&', $url);
-            //https://v.qq.com/iframe/preview.html?vid=i1324786hv8&width=500&height=375&auto=0
-            $url_arr = parse_url($url);
-            $query = $url_arr['query'] ?? '';
-            $vidArray = explode("&vid=", $query);
-            //获取到vid
-            $vid_arr = [$vidArray[1]] ?? '';
-            if (empty($vid_arr)) {
-                throw new wechatArticleException('视频参数异常：' . $query);
-            }
-        }
         $chat_info_id['video'] = $vid_arr;
         $chat_info_id['voice'] = $voice_arr;
         return $chat_info_id;
