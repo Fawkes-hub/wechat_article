@@ -80,3 +80,6 @@ class Controller{
         }
 }
 ```
+
+### 感谢打赏
+![avatar](s/1.jpg)
