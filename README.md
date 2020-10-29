@@ -1,13 +1,46 @@
 # wechat_article
-基于QueryList的微信公众号文章获取工具--
-可以获得：文章标题、文章作者、文章原创标识、文章正文、文章发布时间、文章简介、文章原始url、文章主图、文章公众号名称
+基于QueryList的微信公众号文章获取工具
+- [X] 文章标题
+- [x] 文章作者
+- [x] 文章原创标识  
+- [x] 文章正文  
+- [x] 文章发布时间  
+- [x] 文章简介  
+- [x] 文章原始url
+- [x] 文章主图
+- [x] 文章公众号名称
+- [x] 文章内视频资源的地址获取
+- [x] 文章音频资源的地址获取
+- [ ] 资源的下载
 
 #### 安装教程
-
 ```bash
 composer require fawkes/wechat_article
 ```
+#### 测试地址
+```php
+use fawkes\wechat_article\wechatArticle;
+use fawkes\wechat_article\wechatArticleException;
+use fawkes\wechat_article\wechatArticleVideo;
 
+try {
+    $url = $_GET['url'] ?? "https://mp.weixin.qq.com/s/-kxb8IKY68KkwAqY6f-V8g";
+    $articleClass = new wechatArticle;
+    $article = $articleClass->crawQueryByUrl($url);
+//    print_r($article['content']);
+    unset($article['content']); //内容过长影响展示
+    var_dump($article);
+    var_dump($articleClass->title);
+
+    //查看文章内的视频和音频
+    $video = new  wechatArticleVideo();
+    $video_arr = $video->actionGetwx($url);
+    var_dump($video_arr);
+} catch (wechatArticleException $e) {
+    var_dump($e->getMessage());
+    var_dump($e->getTrace());
+}
+```
 #### 使用说明
 
 ```php
