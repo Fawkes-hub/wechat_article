@@ -62,17 +62,6 @@ class wechatArticleVideo
         return $info_arr;
     }
 
-
-    /**
-     * 保存video
-     * @param string $video_url 视频地址
-     */
-    public function saveVideo(string $video_url)
-    {
-        exec("ffmpeg -i '$video_url' -c copy './test.mp4'  2>&1", $out, $status);
-        return $out;
-    }
-
     /**
      * 获取公众号中的资源  音频和视频
      * @param $url

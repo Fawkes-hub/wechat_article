@@ -11,6 +11,8 @@
 - [x] 文章公众号名称
 - [x] 文章内视频资源的地址获取
 - [x] 文章音频资源的地址获取
+- [x] 文章音频资源的时长获取
+- [x] 文章音频资源的容量获取
 - [ ] 资源的下载
 
 #### 安装教程
@@ -32,10 +34,25 @@ try {
     var_dump($article);
     var_dump($articleClass->title);
 
-    //查看文章内的视频和音频
+     //查看文章内的视频和音频
     $video = new  wechatArticleVideo();
-    $video_arr = $video->actionGetwx($url);
-    var_dump($video_arr);
+    $ffmpegUtil = new \fawkes\wechat_article\FfmpegUtil();
+    $info_arr = $video->actionGetwx($url);
+    $video_arr = $info_arr['video'] ??[];
+    $voice_arr = $info_arr['voice'] ??[];
+    //获取下载用户
+    $save_info = [];
+    $sour_arr = array_merge($video_arr,$voice_arr);
+    foreach ($sour_arr as $value){
+        $name = !empty($value['title']) ? $value['title']."-" : "" .$value['vid'];
+        $url = $value['url'] ?? "";
+        if($url){
+            $videoInfo = $ffmpegUtil->getVideoInfo($url);
+            $save_info[] = $videoInfo;
+        }
+    }
+    //查看信息
+    var_dump($save_info);;
 } catch (wechatArticleException $e) {
     var_dump($e->getMessage());
     var_dump($e->getTrace());

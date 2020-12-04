@@ -4,8 +4,8 @@ require_once '../src/wechatArticle.php';
 require_once '../src/wechatArticleVideo.php';
 require_once '../src/tools/tools.php';
 require_once '../src/wechatArticleException.php';
+require_once '../src/utils/FfmpegUtil.php';
 
-use fawkes\wechat_article\wechatArticleException;
 use fawkes\wechat_article\wechatArticleVideo;
 
 try {
@@ -19,11 +19,25 @@ try {
 
     //查看文章内的视频和音频
     $video = new  wechatArticleVideo();
-    $video_arr = $video->actionGetwx($url);
-    var_dump($video_arr);
-    $save = $video->saveVideo("http://mpvideo.qpic.cn/0bf2cai6iaarcqaov2ujxzpucegd4qibdzaa.f10002.mp4?dis_k=a5cba2d6580996be589ccf833fc67ac5&dis_t=1603952965&vid=wxv_1580553152796377090&format_id=10002");
+    $ffmpegUtil = new \fawkes\wechat_article\FfmpegUtil();
+    $info_arr = $video->actionGetwx($url);
+    $video_arr = $info_arr['video'] ?? [];
+    $voice_arr = $info_arr['voice'] ?? [];
+    //获取下载用户
+    $save_info = [];
+    $sour_arr = array_merge($video_arr, $voice_arr);
+    foreach ($sour_arr as $value) {
+        $name = !empty($value['title']) ? $value['title'] . "-" : "" . $value['vid'];
+        $url = $value['url'] ?? "";
+        if ($url) {
+            $videoInfo = $ffmpegUtil->getVideoInfo($url);
+            $save_info[] = $videoInfo;
+        }
+    }
     //查看信息
-} catch (wechatArticleException $e) {
+    var_dump($save_info);
+} catch (\Exception $e) {
+    var_dump($e);
     var_dump($e->getMessage());
     var_dump($e->getTrace());
 }
