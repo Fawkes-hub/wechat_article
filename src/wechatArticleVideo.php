@@ -28,38 +28,34 @@ class wechatArticleVideo
         //获取真实地址链接
         $info_arr = [];
         foreach ($info_id_arr as $key => $value) {
+            $vid = $value['vid'];
             //获取视频
-            switch ($key) {
+            switch ($value['type']) {
                 case 'video':
-                    $info_arr['video'] = [];
-                    if (!empty($value)) {
-                        foreach ($value as $vid) {
-                            $video_json = Tools::getVqqInfo($vid);
-                            if (!empty($video_json['msg']) && $video_json['msg'] == 'vid is wrong') {
-                                //检测微视
-                                $return = $this->weishiQQCom($vid);
-                            } else {
-                                //腾讯视频的真是地址获取
-                                $return = $this->vQQCom($video_json);
-                            }
-                            $info_arr['video'][] = $return;
-                        };
+                    $video_json = Tools::getVqqInfo($vid);
+                    if (!empty($video_json['msg']) && $video_json['msg'] == 'vid is wrong') {
+                        //检测微视
+                        $return = $this->weishiQQCom($vid);
+                    } else {
+                        //腾讯视频的真是地址获取
+                        $return = $this->vQQCom($video_json);
                     }
                     break;
                 case 'voice':
-                    $info_arr['voice'] = [];
-                    if (!empty($value)) {
-                        foreach ($value as $vid) {
-                            $return = $this->voiceInfo($vid);
-                            $info_arr['voice'][] = $return;
-                        };
-                    }
+                    $return = $this->voiceInfo($vid);
                     break;
                 default:
                     break;
             }
+            if (!isset($return['name'])) {
+                $return['name'] = $value['name'] ?? '';
+            }
+            $info_arr[] = [
+                'type' => $value['type'],
+                'data' => $return
+            ];
         }
-        return $info_arr;
+        return array_values($info_arr);
     }
 
     /**
@@ -82,14 +78,40 @@ class wechatArticleVideo
         }
         $data = Tools::curl_request($json);
         $data = json_decode($data, 1);
-        $chat_info_id = [];
         //获取json中的得到视频vid
         $vid_arr = $data['video_ids'] ?? [];
         //获取json中的得到音频的mid
         $voice_arr = array_column($data['voice_in_appmsg'], 'voice_id') ?? [];
-        $chat_info_id['video'] = $vid_arr;
-        $chat_info_id['voice'] = $voice_arr;
-        return $chat_info_id;
+        //要将这些进行排序
+        $voiceArr = [];
+        $content_noencode = $data['content_noencode'];
+        //匹配歌曲的名称
+        $pattern = '~ name=\\"(.*?)\\"~';
+        preg_match_all($pattern, $content_noencode, $matches);
+        if (array_key_exists(1, $matches) && !empty($matches[1][0])) {
+            //找到名字了
+            $voiceArr = $matches[1];
+        }
+        $chat_info_resources_arr = array_merge($voice_arr, $vid_arr);
+        $chat_info_resources = [];
+        foreach ($chat_info_resources_arr as $value) {
+            $resources['sort'] = stripos($content_noencode, $value);
+            $resources['name'] = '';
+            if (in_array($value, $vid_arr)) {
+                $resources['type'] = 'video';
+            } else if (in_array($value, $voice_arr)) {
+                $resources['type'] = 'voice';
+                $resources['name'] = $voiceArr[array_search($value, $voice_arr)];
+                //找到歌名
+                $resources['name'] = preg_replace("/(\s|\&nbsp\;|　|\xc2\xa0)/", " ", strip_tags($resources['name']));
+            }
+            $resources['vid'] = $value;
+            $chat_info_resources[] = $resources;
+        }
+        //按照原有的格式进行排序
+        $sort = array_column($chat_info_resources, 'sort');
+        array_multisort($sort, SORT_ASC, $chat_info_resources);
+        return $chat_info_resources;
     }
 
     /**
@@ -109,7 +131,7 @@ class wechatArticleVideo
         return [
             'vid' => $vid,
             'type' => '公众号素材视频',
-            'title' => $title,
+            'name' => $title,
             'url' => $url
         ];
     }
@@ -128,7 +150,6 @@ class wechatArticleVideo
         $host = $video_json['vl']['vi'][0]['ul']['ui'][0]['url'];
         $streams = $video_json['fl']['fi'];
         $seg_cnt = $video_json['vl']['vi'][0]['cl']['fc'];
-        $best_quality = end($streams)['name'];
         $part_format_id = end($streams)['id'];
         $part_urls = [];
         for ($part = 1; $part <= $seg_cnt + 1; $part++) {
@@ -167,7 +188,7 @@ class wechatArticleVideo
         return [
             'vid' => $vid,
             'type' => '腾讯视频',
-            'title' => $title,
+            'name' => $title,
             'url' => current($part_urls)
         ];
     }

@@ -26,17 +26,6 @@ use QL\QueryList;
 class wechatArticle
 {
     public $articleInfo = [];
-
-    private $title; //文章标题
-    private $article_author; //文章作者
-    private $copyright_stat; //文章原创标识
-    private $content; //文章正文   ---数据库字段建议 longtext
-    private $article_release_time; //文章发布时间  --时间戳
-    private $digest; //文章简介
-    private $article_url; //文章原始url
-    private $thumb; //文章主图
-    private $wx_nickname; //文章公众号
-
     private $http_to_img = '';
 
     /**
@@ -221,6 +210,48 @@ class wechatArticle
         }
         @ header("Content-Type:image/png");
         return file_get_contents($imgUrl);
+    }
+
+
+    /**
+     * 通过公众号url返回JSON数据获取内容
+     * @param string $url 公众号的URL
+     * @return array
+     * @throws \Exception
+     */
+    public function crawJSONQueryByUrl($url)
+    {
+        if (stripos($url, '?')) {
+            if (stripos($url, '#wechat_redirect')) {
+                $url = str_replace('#wechat_redirect', '', $url);
+            }
+            $json = $url . '&f=json';
+        } else {
+            $json = $url . '?f=json';
+        }
+        try {
+            $data = GHttp::get($json);
+            $data = json_decode($data, 1);
+            $info = [
+                'title' => $data['title'],
+                'article_author' => $data['author'],
+                'copyright_stat' => '',
+                'content' => $data['content_noencode'],
+                'article_release_time' => $data['ori_send_time'],
+                'article_url' => htmlspecialchars_decode($data['link']),
+                'thumb' => !empty($data['cdn_url_1_1']) ? $data['cdn_url_1_1'] : $data['cdn_url_235_1'],
+                'wx_nickname' => $data['nick_name']
+            ];
+            $info['article_url'] = !empty(explode('&chksm', $info['article_url'])) ?
+                explode('&chksm', $info['article_url'])[0] : $info['article_url'];
+            // 替换特殊字符
+            $info['content'] = str_replace('img class=""', 'img', $info['content']);
+            $info['content'] = str_replace('<img ', '<img style="max-width:100%!important;height:auto!important;" ', $info['content']);
+            $info['content'] = preg_replace("/(<img.*?)((style)=\"display: block;\")/", '$1 style="display: none;"', $info['content']);
+            return $info;
+        } catch (\Exception $e) {
+            throw new \Exception($e);
+        }
     }
 
 }

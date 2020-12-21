@@ -26,33 +26,24 @@ use fawkes\wechat_article\wechatArticleException;
 use fawkes\wechat_article\wechatArticleVideo;
 
 try {
-    $url = $_GET['url'] ?? "https://mp.weixin.qq.com/s/-kxb8IKY68KkwAqY6f-V8g";
+    $url = $_GET['url'] ?? "https://mp.weixin.qq.com/s/8_NJAZMnjsBmalJ9QQf17w";
     $articleClass = new wechatArticle;
+    //通过HTML页面抓取内容
     $article = $articleClass->crawQueryByUrl($url);
+    var_dump($article);
+    //通过接口返回内容
+    $article = $articleClass->crawJSONQueryByUrl($url);
 //    print_r($article['content']);
     unset($article['content']); //内容过长影响展示
     var_dump($article);
     var_dump($articleClass->title);
-
+    die;
      //查看文章内的视频和音频
     $video = new  wechatArticleVideo();
     $ffmpegUtil = new \fawkes\wechat_article\FfmpegUtil();
     $info_arr = $video->actionGetwx($url);
-    $video_arr = $info_arr['video'] ??[];
-    $voice_arr = $info_arr['voice'] ??[];
-    //获取下载用户
-    $save_info = [];
-    $sour_arr = array_merge($video_arr,$voice_arr);
-    foreach ($sour_arr as $value){
-        $name = !empty($value['title']) ? $value['title']."-" : "" .$value['vid'];
-        $url = $value['url'] ?? "";
-        if($url){
-            $videoInfo = $ffmpegUtil->getVideoInfo($url);
-            $save_info[] = $videoInfo;
-        }
-    }
     //查看信息
-    var_dump($save_info);;
+    var_dump($info_arr);;
 } catch (wechatArticleException $e) {
     var_dump($e->getMessage());
     var_dump($e->getTrace());

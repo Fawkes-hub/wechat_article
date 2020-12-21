@@ -15,6 +15,7 @@
   "license": "Apache-2.0",
   "minimum-stability": "stable",
   "require": {
-    "jaeger/querylist": "4.2.5"
+    "jaeger/querylist": "4.2.5",
+    "php-ffmpeg/php-ffmpeg": "~0.5"
   }
 }
